@@ -14,7 +14,11 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolu
 # modelos
 import xgboost as xgb
 
-st.set_page_config(page_title='Análises do preço do petróleo Brent', page_icon=':oil_drum:', layout="wide")
+DATE_FORMAT = '%d/%m/%Y'
+FEATURES_XGB = ['ano', 'mes', 'dia', 'diadasemana']
+TARGET_XGB = 'Preco_Petroleo'
+
+st.set_page_config(page_title='Análises do preço do petróleo Brent', page_icon=':oil_drum:', layout='wide', initial_sidebar_state='collapsed')
 
 @st.cache_data
 def carrega_dados():
@@ -25,6 +29,34 @@ def carrega_dados():
   df = df.set_index('Data')
   df = df.sort_values(by='Data', ascending=True)
   return df
+
+@st.cache_resource
+def predict_proximo_dia_xgboost(treino):
+  treino_proximo_dia_xgb = treino.copy()
+  treino_proximo_dia_xgb = treino_proximo_dia_xgb.reset_index()
+  treino_proximo_dia_xgb['ano'] = treino_proximo_dia_xgb['Data'].dt.year
+  treino_proximo_dia_xgb['mes'] = treino_proximo_dia_xgb['Data'].dt.month
+  treino_proximo_dia_xgb['dia'] = treino_proximo_dia_xgb['Data'].dt.day
+  treino_proximo_dia_xgb['diadasemana'] = treino_proximo_dia_xgb['Data'].dt.dayofweek
+  
+  ultimo_dia = treino.index[-1]
+  proximo_dia = ultimo_dia + pd.offsets.BDay()
+
+  X_proximo_dia = pd.DataFrame({
+      'ano': [proximo_dia.year],
+      'mes': [proximo_dia.month],
+      'dia': [proximo_dia.day],
+      'diadasemana': [proximo_dia.dayofweek]
+  })
+
+  X_train_xgb, y_train_xgb = treino_proximo_dia_xgb[FEATURES_XGB], treino_proximo_dia_xgb[TARGET_XGB]
+
+  reg = xgb.XGBRegressor(objective='reg:squarederror')
+  reg.fit(X_train_xgb, y_train_xgb)
+
+  predict_xgb = reg.predict(X_proximo_dia)
+  preco_previsto_proximo_dia = predict_xgb[0]
+  return proximo_dia, preco_previsto_proximo_dia
 
 @st.cache_resource
 def predict_xgboost(train, test):
@@ -45,11 +77,8 @@ def predict_xgboost(train, test):
   test_xgb['dia'] = test_xgb['Data'].dt.day
   test_xgb['diadasemana'] = test_xgb['Data'].dt.dayofweek
   
-  FEATURES = ['ano', 'mes', 'dia', 'diadasemana']
-  TARGET = 'Preco_Petroleo'
-
-  X_train_xgb, y_train_xgb = train_xgb[FEATURES], train_xgb[TARGET]
-  X_test_xgb, y_test_xgb = test_xgb[FEATURES], test_xgb[TARGET]
+  X_train_xgb, y_train_xgb = train_xgb[FEATURES_XGB], train_xgb[TARGET_XGB]
+  X_test_xgb, y_test_xgb = test_xgb[FEATURES_XGB], test_xgb[TARGET_XGB]
 
   reg = xgb.XGBRegressor(objective='reg:squarederror')
   reg.fit(X_train_xgb, y_train_xgb)
@@ -58,11 +87,15 @@ def predict_xgboost(train, test):
 
   return test_xgb, predict_xgb
 
-def plot_testpredict(model, x_test, y_test, x_predict, y_predict):
+def plot_testpredict(model, x_test, y_test, x_predict, y_predict, x_predict_next, y_predict_next):
   fig = px.line()
 
   fig.add_scatter(x=x_test, y=y_test, name='Dados de Teste')
   fig.add_scatter(x=x_predict, y=y_predict, name=f'Previsões {model}')
+  fig.add_scatter(x=[x_predict_next], y=[y_predict_next], 
+                   mode='markers',
+                   marker=dict(size=10, symbol='star', color='black'),
+                   name='Próxima Previsão')
 
   fig.update_layout(
       title=f'Previsão do Valor de Fechamento do Índice da Bolsa - {model}',
@@ -80,8 +113,6 @@ def calculate_metrics(y_true, y_pred):
   return mae, mse, mape
 
 df = carrega_dados()
-
-date_format = '%d/%m/%Y'
 
 min_date = df.index[0].to_pydatetime()
 max_date = df.index[-1].to_pydatetime()
@@ -129,13 +160,18 @@ st.sidebar.title('Filtros')
 start_date = st.sidebar.slider('Data Inicial', min_date, max_date, max_date - relativedelta(years=5))
 st.sidebar.caption(f'Data a partir da qual queremos as previsões. Dados disponíveis de {min_date.strftime("%d/%m/%Y")} a {max_date.strftime("%d/%m/%Y")}.')
 
+min_date_filtrado = min_date
+max_date_filtrado = max_date
+
 if start_date:
-    df_filtrado = df[df.index >= start_date]
+  df_filtrado = df[df.index >= start_date]
+  min_date_filtrado = df_filtrado.index[0].to_pydatetime()
+  max_date_filtrado = df_filtrado.index[-1].to_pydatetime()
 
 test_size = st.sidebar.number_input('Tamanho do teste', min_value=1, max_value=180, value=default_test_size)
 st.sidebar.caption(f'Tamanho do dataset separado para teste dos modelos. Por padrão, será considerado {default_test_size}.')
 
-aba1, aba2, aba3, aba4, aba5 = st.tabs(['Análise Histórica', 'Modelo Preditivo com XGBoost', 'Plano de Deploy do Modelo em Produção', 'Dados brutos', 'Quem somos nós?'])
+aba1, aba2, aba3, aba4 = st.tabs(['Análise Histórica', 'Modelo Preditivo com XGBoost', 'Dados brutos', 'Quem somos nós?'])
 
 # criando dfs de treino e teste
 df_modeling = df_filtrado[['Preco_Petroleo']]
@@ -144,12 +180,12 @@ train = df_modeling[:train_size]
 test = df_modeling[train_size:]
 
 with aba1:
+  st.write(f'Gráfico com preço do petróleo Brent para o perído selecionado, de {min_date_filtrado.strftime(DATE_FORMAT)} a {max_date_filtrado.strftime(DATE_FORMAT)}, considerando eventos importantes.')
 
   eventos_historicos_filtrados = []
   for evento in eventos_historicos:
 
     evento_date = datetime.strptime(evento['date'], '%Y-%m-%d')
-    min_date_filtrado = df_filtrado.index[0].to_pydatetime()
  
     if evento_date >= min_date_filtrado:
       eventos_historicos_filtrados.append(evento)
@@ -185,7 +221,9 @@ with aba1:
   )
    
   st.plotly_chart(fig_precos, use_container_width=True)
-  
+
+  st.write('_Observação: Você pode alterar a data inicial considerada para treino do modelo utilizando os filtros da barra lateral._')
+
   st.write('#### Resumo dos Impactos Globais no Preço do Petróleo Brent')
 
   st.write('''O preço do petróleo é **altamente sensível** a **movimentos globais**, como **oferta e demanda** (impactados por crises, mudanças econômicas e novas fontes de energia), **conflitos geopolíticos** (como guerras e sanções) e **expectativas do mercado** (influenciadas por incertezas e especulação).
@@ -199,8 +237,20 @@ Esses eventos refletem como fatores econômicos, políticos e tecnológicos glob
       st.write(evento['descricao'])
 
 with aba2:
+  proximo_dia, preco_proximo_dia = predict_proximo_dia_xgboost(df_modeling)
   test_xgb, predict_xgb = predict_xgboost(train, test)
   metrics_xgb = calculate_metrics(test_xgb['Preco_Petroleo'], predict_xgb)
+
+  st.header('Previsão de Preço')
+  st.write(f'Previsão do preço do Petróleo Brent para o próximo dia útil, utilizando os dados de treinamento para o perído selecionado, de {min_date_filtrado.strftime(DATE_FORMAT)} a {max_date_filtrado.strftime(DATE_FORMAT)}.')
+
+  coluna1, coluna2 = st.columns([0.3, 0.7])
+  with coluna1:
+    st.metric('Data previsão (próximo dia útil)', proximo_dia.to_pydatetime().strftime(DATE_FORMAT))
+  with coluna2:
+    st.metric('Preço previsto para o Petróleo Brent', '{:.2f}'.format(preco_proximo_dia).replace('.', ','))
+  st.write('_Observação: Você pode alterar a data inicial considerada para treino do modelo utilizando os filtros da barra lateral._')
+
 
   st.subheader('Métricas de Avaliação')
   df_metrics = pd.DataFrame(
@@ -213,18 +263,18 @@ with aba2:
   })
 
   st.subheader('Gráfico')
-  fig_xbg = plot_testpredict('XGBoost', test_xgb['Data'], test_xgb['Preco_Petroleo'], test_xgb['Data'], predict_xgb)
+  fig_xbg = plot_testpredict('XGBoost', test_xgb['Data'], test_xgb['Preco_Petroleo'], test_xgb['Data'], predict_xgb, proximo_dia, preco_proximo_dia)
   st.plotly_chart(fig_xbg, use_container_width=True)
 
-with aba4:
-  st.write(f'Dados históricos diários de { min_date.strftime(date_format) } a { max_date.strftime(date_format) }')
+with aba3:
+  st.write(f'Dados históricos diários de { min_date.strftime(DATE_FORMAT) } a { max_date.strftime(DATE_FORMAT) }')
   st.write('Fonte: http://www.ipeadata.gov.br/ExibeSerie.aspx?module=m&serid=1650971490&oper=view')
   st.dataframe(df, use_container_width=True, column_config={
     '_index': st.column_config.DatetimeColumn(format='DD/MM/YYYY'),
     'Preco_Petroleo': st.column_config.NumberColumn(label='Preço Brent (US$)', format="%f")
   })
 
-with aba5:
+with aba4:
   st.write('''###### Grupo 46
 
   Somos da Consultoria Grupo 46, uma consultoria especializada em análise histórica e forecasting de commodities e produtos financeiros.
