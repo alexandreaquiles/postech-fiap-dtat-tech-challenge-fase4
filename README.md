@@ -6,15 +6,9 @@ Entrega do Tech Challenge da Fase 4 da Pós Tech em Data Analytics da FIAP, turm
 
 Neste relatório, realizamos uma análise histórica e um forecasting do preço do barril de pretróleo Brent.
 
-O petróleo Brent é um tipo de petróleo bruto produzido no Mar do Norte, na Europa, e serve como fator de comparação para o preço internacional de diferentes tipos de petróleo.
-
-Consideramos o preço do barril de petróleo tipo Brent em dólares (US$), não incluindo despesas com frete e seguro (preço FOB - free on board).
-
 A fonte dos dados é o site do Ipea: http://www.ipeadata.gov.br/ExibeSerie.aspx?module=m&serid=1650971490&oper=view
 
-Desenvolvemos um Dashboard Interativo que torna possível gerar insights para a tomada de decisão.
-
-Além disso, também desenvolvemos um modelo de Machine Learning preditivo, com o intuito de fazer o _forecasting_ do preço do petróleo.
+Desenvolvemos um Dashboard Interativo que torna possível gerar insights para a tomada de decisão. Além disso, desenvolvemos um modelo de Machine Learning preditivo, com o intuito de fazer o _forecasting_ do preço do petróleo.
 
 ### Quem somos nós?
 
