@@ -17,6 +17,7 @@ import xgboost as xgb
 DATE_FORMAT = '%d/%m/%Y'
 FEATURES_XGB = ['ano', 'mes', 'dia', 'diadasemana']
 TARGET_XGB = 'Preco_Petroleo'
+ANOS_PADRAO = 21
 
 st.set_page_config(page_title='Análises do preço do petróleo Brent', page_icon=':oil_drum:', layout='wide', initial_sidebar_state='collapsed')
 
@@ -157,7 +158,7 @@ st.divider()
 
 st.sidebar.title('Filtros')
 
-start_date = st.sidebar.slider('Data Inicial', min_date, max_date, max_date - relativedelta(years=5))
+start_date = st.sidebar.slider('Data Inicial', min_date, max_date, max_date - relativedelta(years=ANOS_PADRAO))
 st.sidebar.caption(f'Data a partir da qual queremos as previsões. Dados disponíveis de {min_date.strftime("%d/%m/%Y")} a {max_date.strftime("%d/%m/%Y")}.')
 
 min_date_filtrado = min_date
