@@ -53,7 +53,32 @@ Os resultados foram os seguintes:
 | SARIMAX | 6.047026 | 38.331656	 | 8.199489 |
 | Prophet | 15.691890 | 248.811764 | 21.228882 |
 
-Os melhores resultados foram do modelo **XGBoost**, que foi o considerado para o Dashboard Interativo e o deploy em produção.
+Os melhores resultados foram do modelo **XGBoost**, que foi o considerado para o Dashboard Interativo e o deploy do MVP.
+
+## Plano de Deploy em Produção
+
+Segue um planejamento das ferramentas necessárias para a Operação do modelo em um ambiente produtivo.
+
+### Ambiente de Desenvolvimento
+
+- Controle de versão no Git e GitHub
+- Docker para containerização
+- Pipenv para gerenciamento de dependências
+- Qualidade de código com pylint, black code formatter e isort para imports
+
+### Infraestrutura Básica de Produção
+
+- Cloud Provider: Amazon AWS
+- Plataforma: Kubernetes no Amazon EKS
+- Container Registry: Amazon ECR
+- CI/CD: GitHub Actions
+
+### Monitoramento
+
+- Prometheus para métricas
+- Grafana para visualização
+- Amazon AWS CloudWatch para logs
+- MLflow pra tracking de experimentos
 
 ## Próximos passos
 
