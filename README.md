@@ -53,11 +53,21 @@ Os resultados foram os seguintes:
 | SARIMAX | 6.047026 | 38.331656	 | 8.199489 |
 | Prophet | 15.691890 | 248.811764 | 21.228882 |
 
-Como passos a explorar poderíamos considerar variáveis exógenas como:
+Os melhores resultados foram do modelo **XGBoost**, que foi o considerado para o Dashboard Interativo e o deploy em produção.
+
+## Próximos passos
+
+Modelos como o XGBoost, Prophet e SARIMAX aumentam sua performance quando são utilizadas variáveis exógenas. Como passos a explorar poderíamos considerar dados externos como como:
 
 - **DXY (US Dollar Index)**: O DXY (Índice do Dólar dos EUA) é uma medida do valor do dólar americano em relação a uma cesta de seis principais moedas mundiais: Euro, Iene Japonês, Libra Esterlina, Dólar Canadense, Coroa Sueca e Franco Suíço. É um indicador-chave da força do dólar nos mercados globais e frequentemente utilizado por traders e economistas para avaliar o desempenho das moedas.
+- **S&P 500**: O Standard & Poor's 500, é um índice de mercado que acompanha 500 grandes empresas de capital aberto listadas nas bolsas de valores dos Estados Unidos. É considerado um indicador-chave do desempenho geral do mercado acionário americano e da economia dos EUA como um todo. Investidores e economistas frequentemente o utilizam como referência para avaliar a saúde do mercado e as tendências econômicas.
 - **WTI (West Texas Intermediate)**: WTI (West Texas Intermediate) é um tipo específico de petróleo bruto utilizado como referência na precificação do petróleo. É produzido nos Estados Unidos, principalmente no Texas e no Novo México, e é conhecido por sua alta qualidade e baixo teor de enxofre. O WTI é negociado na Bolsa de Mercadorias de Nova York (NYMEX) e serve como um preço de referência importante para os mercados de petróleo, frequentemente comparado ao Brent, extraído no Mar do Norte.
-- **S&P 500**: O S&P 500 é um índice de mercado que acompanha 500 grandes empresas de capital aberto listadas nas bolsas de valores dos Estados Unidos. É considerado um indicador-chave do desempenho geral do mercado acionário americano e da economia dos EUA como um todo. Investidores e economistas frequentemente o utilizam como referência para avaliar a saúde do mercado e as tendências econômicas.
+
+Esses dados podem ser obtidos com a biblioteca `yfinance` com os seguintes tickers:
+
+- `DX-Y.NYB` para o indíce comparativo do dólar americano DXY
+- `^GSPC` para o índice da bolsa de valores dos EUA Standard & Poor's 500
+- `CL=F` para o petróleo bruto WTI
 
 ### Como rodar localmente?
 
