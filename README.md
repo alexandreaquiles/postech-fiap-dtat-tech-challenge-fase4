@@ -78,7 +78,6 @@ Segue um planejamento das ferramentas necessárias para a Operação do modelo e
 - Prometheus para métricas
 - Grafana para visualização
 - Amazon AWS CloudWatch para logs
-- MLflow pra tracking de experimentos
 
 ## Próximos passos
 
